@@ -43,7 +43,7 @@ rest_page_years1 = []
 rest_page_years2 = []
 rest_page_years3 = []
 
-
+#Splitting in three loops had to be done in order to speed up the process.
 for number_of_page in range(2, 180):
     rest_page_years1 += pageyears(number_of_page)
 
