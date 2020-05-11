@@ -19,45 +19,46 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 from sklearn.metrics import roc_curve, roc_auc_score
 
 
-# 'CARS PRICES SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES PRICES SCRAPING FROM WEB PAGE LISTINGS'
 
-fst_page_listings_soup = BeautifulSoup(requests.get('https://www.truecar.com/used-cars-for-sale/listings/').content,
-                                       'lxml')
-fst_page_prices_soup = fst_page_listings_soup.find_all('h4', {'data-test': 'vehicleCardPricingBlockPrice'})
-fst_page_prices = re.findall('[0-9]+,[0-9]+', str(fst_page_prices_soup))
+# 'Function to get the raw HTML soups from all 600 web pages'
 
 
-# 'Scraping rest of pages listings prices'
+def get_soups(website_number):
+    get_url = requests.get('https://www.truecar.com/used-cars-for-sale/listings/?page=' + str(website_number))
+    return BeautifulSoup(get_url.content, 'lxml')
 
-def pricesscraper(number_of_page):
-    nth_page_listings_soup = BeautifulSoup(requests.get('https://www.truecar.com/used-cars-for-sale/listings/?page='
-                                                        + str(number_of_page)).content, 'lxml')
-    nth_page_prices_soup = nth_page_listings_soup.find_all('h4', {'data-test': 'vehicleCardPricingBlockPrice'})
+
+soups = list(map(get_soups, list(range(1, 600))))
+
+# 'Function to scrape the vehicles prices for each web page'
+
+
+def prices_scraper(soup):
+    nth_page_prices_soup = soup.find_all('h4', {'data-test': 'vehicleCardPricingBlockPrice'})
     nth_page_prices = re.findall('[0-9]+,[0-9]+', str(nth_page_prices_soup))
     return nth_page_prices
 
 
-prices = list(map(pricesscraper, range(2, 600)))
+prices = list(map(prices_scraper, soups))
 prices = str(prices).replace('[', '').replace(']', '').split(', ')
 prices = list(map(lambda x: x[1:-1], prices))
-prices += fst_page_prices
+
 
 # 'CARS YEARS SCRAPING FROM WEB PAGE LISTINGS'
 
+# Function to scrape a feature from each soup and return the features list
+
 
 def scraper(tag, element, element_description, regex):
-
-    def featuresscraper(number):
-        nth_page_listings_soup = BeautifulSoup(requests.get('https://www.truecar.com/used-cars-for-sale/listings/?page=' + str(number)).content, 'lxml')
-        nth_page_features_soup = nth_page_listings_soup.find_all(tag, {element: element_description})
+    def featuresscraper(soup):
+        nth_page_features_soup = soup.find_all(tag, {element: element_description})
         nth_page_features = re.findall(regex, str(nth_page_features_soup))
         return nth_page_features
-
-    features = list(map(featuresscraper, range(1, 4)))
+    features = list(map(featuresscraper, soups))
     features = str(features).replace('[', '').replace(']', '').split(', ')
-    features = list(map(lambda x: x[1:-1], features))
+    features = list(map(lambda x: x[1: -1], features))
     return features
-
 
 years = scraper('span', 'class', 'vehicle-card-year', '[12][0-9]{3}')
 
