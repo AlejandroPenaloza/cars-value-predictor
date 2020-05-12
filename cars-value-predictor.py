@@ -45,47 +45,77 @@ prices = str(prices).replace('[', '').replace(']', '').split(', ')
 prices = list(map(lambda x: x[1:-1], prices))
 
 
-# 'CARS YEARS SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES YEARS SCRAPING FROM WEB PAGE LISTINGS'
 
 # Function to scrape a feature from each soup and return the features list
 
 
 def scraper(tag, element, element_description, regex):
-    def featuresscraper(soup):
+    def features_scraper(soup):
         nth_page_features_soup = soup.find_all(tag, {element: element_description})
         nth_page_features = re.findall(regex, str(nth_page_features_soup))
         return nth_page_features
-    features = list(map(featuresscraper, soups))
+    features = list(map(features_scraper, soups))
     features = str(features).replace('[', '').replace(']', '').split(', ')
     features = list(map(lambda x: x[1: -1], features))
     return features
 
+
 years = scraper('span', 'class', 'vehicle-card-year', '[12][0-9]{3}')
 
-# 'CARS MILEAGES SCRAPING FROM WEB PAGES LISTINGS'
 
-mileages_unf = scraper('div', 'class', 'font-size-1 text-truncate', 'g>[0-9]*,[0-9]+')
-mileages = list(map(lambda mileage: mileage[2:], mileages_unf))
-
-# 'CARS LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS'
 
 states = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z]{2}')
 
-# 'CARS LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS'
 
 cities_unf = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z][a-z]+[. ]*[A-Z]*[a-z]*[. ]*[A-Z]*[a-z]*')
 cities = [city for city in cities_unf if cities_unf.index(city) in list(range(3, len(cities_unf), 4))]
 
-# 'CARS EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
 
 exterior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', 'g>[A-Z][a-z]+')
 exterior_colors = list(map(lambda color: color[2:], exterior_colors_unf))
 
-# 'CARS INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
 
 interior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', '->[A-Z][a-z]+')
 interior_colors = list(map(lambda color: color[2:], interior_colors_unf))
 
-# 'CARS CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS'
+# 'VEHICLES CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS'
 
 accidents = scraper('div', 'data-test', 'vehicleCardCondition', '[0-9]*[A-z]* accident[s]*')
+
+# 'VEHICLES MILEAGES SCRAPING FROM WEB PAGES LISTINGS'
+
+fst_page_urls = np.array([])
+
+
+for ind in range(33):
+    finding = soups[0].find_all('a', {'data-test': 'usedListing'})[ind]
+    fst_page_urls = np.append(fst_page_urls, re.findall('href=".+" style', str(finding)[:280]))
+
+
+def urls_scraper(soup):
+    nth_urls = []
+
+    for nth in range(30):
+        finding = soup.find_all('a', {'data-test': 'usedListing'})[nth]
+        nth_urls.append(re.findall('href="/.+" style', str(finding)[:280])[0])
+
+    return nth_urls
+
+
+rest_urls_list = list(map(urls_scraper, soups[1:]))
+rest_pages_urls = np.array(rest_urls_list).flatten()
+all_urls = np.append(fst_page_urls, rest_pages_urls)
+url_formatter = np.vectorize(lambda url: 'https://truecar.com' + url[6: -7])
+urls = url_formatter(all_urls)
+
+
+def mileage_from_url(url):
+    nth_url_request = requests.get(url)
+    nth_soup = BeautifulSoup(nth_url_request.content, 'lxml')
+    nth_finding = nth_soup.find_all('div', {'data-qa': 'Col'})
+    return re.findall('i>[0-9]*,[0-9]+<', str(nth_finding))[0][2: -2]
