@@ -118,4 +118,7 @@ def mileage_from_url(url):
     nth_url_request = requests.get(url)
     nth_soup = BeautifulSoup(nth_url_request.content, 'lxml')
     nth_finding = nth_soup.find_all('div', {'data-qa': 'Col'})
-    return re.findall('i>[0-9]*,[0-9]+<', str(nth_finding))[0][2: -2]
+    return re.findall('i>[0-9]*,[0-9]+<', str(nth_finding))[0]
+
+
+mileages = list(map(mileage_from_url, urls))
