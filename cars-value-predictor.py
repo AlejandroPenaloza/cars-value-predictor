@@ -115,18 +115,7 @@ url_formatter = np.vectorize(lambda url: 'https://truecar.com' + url[6: -7])
 urls = url_formatter(all_urls)
 
 
-def mileage_from_url(url):
-    nth_url_request = requests.get(url)
-    nth_soup = BeautifulSoup(nth_url_request.content, 'lxml')
-    nth_finding = nth_soup.find_all('div', {'data-qa': 'Col'})
-    return re.findall('i>[0-9]*,[0-9]+<', str(nth_finding))[0]
-
-
-mileages = list(map(mileage_from_url, urls))
-
-
-# VEHICLES ENGINES SCRAPING FROM WEB PAGES LISTINGS
-
+# VEHICLES STYLES SCRAPING FROM WEB PAGES LISTINGS
 
 def feature_scraper_from_url(feature_as_argument):
     def feature_from_url(url):
@@ -134,9 +123,48 @@ def feature_scraper_from_url(feature_as_argument):
         nth_soup = BeautifulSoup(nth_request.content, 'lxml')
         nth_search = re.search(feature_as_argument + '</h4><ul><li>.+</li', str(nth_soup))
         return re.findall('li>.+</l', str(nth_search))
-    features_unf = list(map(feature_from_url, urls))
+    features_unf = list(map(feature_from_url, urls[:10]))
     features = list(map(lambda f: str(f)[5: -5], features_unf))
     return features
 
 
+styles = feature_scraper_from_url('Style')
+
+
+# VEHICLE OPTIONS LEVELS SCRAPING FROM WEB PAGES LISTINGS
+
 options_level = feature_scraper_from_url('Options Level')
+
+
+# VEHICLE BED LENGTHS SCRAPING FROM WEB PAGES LISTINGS
+
+bed_lengths = feature_scraper_from_url('Bed Length')
+
+
+# VEHICLE MILEAGES PER GALLON SCRAPING FROM WEB PAGES LISTINGS
+
+MPGs = feature_scraper_from_url('MPG')
+
+
+# VEHICLES DRIVE TYPES SCRAPING FROM WEB PAGES LISTINGS
+
+drive_types = feature_scraper_from_url('Drive Type')
+
+
+# VEHICLE FUEL TYPES SCRAPING FROM WEB PAGES LISTINGS
+
+fuel_types = feature_scraper_from_url('Fuel Type')
+
+
+# VEHICLE TRANSMISSIONS SCRAPING FROM WEB PAGES LISTINGS
+
+transmissions = feature_scraper_from_url('Transmission')
+
+
+# VEHICLE MILEAGES SCRAPING FROM WEB PAGES LISTINGS
+
+mileages = feature_scraper_from_url('Mileage')
+
+
+# VEHICLE ENGINES SCRAPING FROM WEB PAGES LISTINGS
+
