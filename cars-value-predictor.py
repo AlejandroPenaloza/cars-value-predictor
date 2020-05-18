@@ -1,3 +1,4 @@
+import itertools
 import pandas as pd
 import numpy as np
 import scipy.stats
@@ -19,9 +20,9 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 from sklearn.metrics import roc_curve, roc_auc_score
 
 
-# 'VEHICLES PRICES SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES PRICES SCRAPING FROM WEB PAGE LISTINGS
 
-# 'Function to get the raw HTML soups from all 600 web pages'
+# Function to get the raw HTML soups from all 600 web pages
 
 
 def get_soups(website_number):
@@ -31,7 +32,7 @@ def get_soups(website_number):
 
 soups = list(map(get_soups, list(range(1, 600))))
 
-# 'Function to scrape the vehicles prices for each web page'
+# Function to scrape the vehicles prices for each web page
 
 
 def prices_scraper(soup):
@@ -45,7 +46,7 @@ prices = str(prices).replace('[', '').replace(']', '').split(', ')
 prices = list(map(lambda x: x[1:-1], prices))
 
 
-# 'VEHICLES YEARS SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES YEARS SCRAPING FROM WEB PAGE LISTINGS
 
 # Function to scrape a feature from each soup and return the features list
 
@@ -64,30 +65,30 @@ def scraper(tag, element, element_description, regex):
 years = scraper('span', 'class', 'vehicle-card-year', '[12][0-9]{3}')
 
 
-# 'VEHICLES LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS
 
 states = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z]{2}')
 
-# 'VEHICLES LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS
 
 cities_unf = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z][a-z]+[. ]*[A-Z]*[a-z]*[. ]*[A-Z]*[a-z]*')
 cities = [city for city in cities_unf if cities_unf.index(city) in list(range(3, len(cities_unf), 4))]
 
-# 'VEHICLES EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
 
 exterior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', 'g>[A-Z][a-z]+')
 exterior_colors = list(map(lambda color: color[2:], exterior_colors_unf))
 
-# 'VEHICLES INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
 
 interior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', '->[A-Z][a-z]+')
 interior_colors = list(map(lambda color: color[2:], interior_colors_unf))
 
-# 'VEHICLES CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS'
+# VEHICLES CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS
 
 accidents = scraper('div', 'data-test', 'vehicleCardCondition', '[0-9]*[A-z]* accident[s]*')
 
-# 'VEHICLES MILEAGES SCRAPING FROM WEB PAGES LISTINGS'
+# VEHICLES MILEAGES SCRAPING FROM WEB PAGES LISTINGS
 
 fst_page_urls = np.array([])
 
@@ -122,3 +123,20 @@ def mileage_from_url(url):
 
 
 mileages = list(map(mileage_from_url, urls))
+
+
+# VEHICLES ENGINES SCRAPING FROM WEB PAGES LISTINGS
+
+
+def feature_scraper_from_url(feature_as_argument):
+    def feature_from_url(url):
+        nth_request = requests.get(url)
+        nth_soup = BeautifulSoup(nth_request.content, 'lxml')
+        nth_search = re.search(feature_as_argument + '</h4><ul><li>.+</li', str(nth_soup))
+        return re.findall('li>.+</l', str(nth_search))
+    features_unf = list(map(feature_from_url, urls))
+    features = list(map(lambda f: str(f)[5: -5], features_unf))
+    return features
+
+
+options_level = feature_scraper_from_url('Options Level')
