@@ -19,7 +19,6 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 from sklearn.metrics import roc_curve, roc_auc_score
 
-
 # VEHICLES PRICES SCRAPING FROM WEB PAGE LISTINGS
 
 # Function to get the raw HTML soups from all 600 web pages
@@ -45,9 +44,7 @@ prices = list(map(prices_scraper, soups))
 prices = str(prices).replace('[', '').replace(']', '').split(', ')
 prices = list(map(lambda x: x[1:-1], prices))
 
-
 # VEHICLES YEARS SCRAPING FROM WEB PAGE LISTINGS
-
 # Function to scrape a feature from each soup and return the features list
 
 
@@ -64,32 +61,25 @@ def scraper(tag, element, element_description, regex):
 
 years = scraper('span', 'class', 'vehicle-card-year', '[12][0-9]{3}')
 
-
 # VEHICLES LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS
-
 states = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z]{2}')
 
 # VEHICLES LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS
-
 cities_unf = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z][a-z]+[. ]*[A-Z]*[a-z]*[. ]*[A-Z]*[a-z]*')
 cities = [city for city in cities_unf if cities_unf.index(city) in list(range(3, len(cities_unf), 4))]
 
 # VEHICLES EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
-
 exterior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', 'g>[A-Z][a-z]+')
 exterior_colors = list(map(lambda color: color[2:], exterior_colors_unf))
 
 # VEHICLES INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
-
 interior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', '->[A-Z][a-z]+')
 interior_colors = list(map(lambda color: color[2:], interior_colors_unf))
 
 # VEHICLES CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS
-
 accidents = scraper('div', 'data-test', 'vehicleCardCondition', '[0-9]*[A-z]* accident[s]*')
 
 # VEHICLES MILEAGES SCRAPING FROM WEB PAGES LISTINGS
-
 fst_page_urls = np.array([])
 
 
@@ -114,10 +104,11 @@ all_urls = np.append(fst_page_urls, rest_pages_urls)
 url_formatter = np.vectorize(lambda url: 'https://truecar.com' + url[6: -7])
 urls = url_formatter(all_urls)
 
-
 # VEHICLES STYLES SCRAPING FROM WEB PAGES LISTINGS
 
+
 def feature_scraper_from_url(feature_as_argument):
+
     def feature_from_url(url):
         nth_request = requests.get(url)
         nth_soup = BeautifulSoup(nth_request.content, 'lxml')
@@ -130,41 +121,61 @@ def feature_scraper_from_url(feature_as_argument):
 
 styles = feature_scraper_from_url('Style')
 
-
 # VEHICLE OPTIONS LEVELS SCRAPING FROM WEB PAGES LISTINGS
-
 options_level = feature_scraper_from_url('Options Level')
 
-
 # VEHICLE BED LENGTHS SCRAPING FROM WEB PAGES LISTINGS
-
 bed_lengths = feature_scraper_from_url('Bed Length')
 
-
 # VEHICLE MILEAGES PER GALLON SCRAPING FROM WEB PAGES LISTINGS
-
 MPGs = feature_scraper_from_url('MPG')
 
-
 # VEHICLES DRIVE TYPES SCRAPING FROM WEB PAGES LISTINGS
-
 drive_types = feature_scraper_from_url('Drive Type')
 
-
 # VEHICLE FUEL TYPES SCRAPING FROM WEB PAGES LISTINGS
-
 fuel_types = feature_scraper_from_url('Fuel Type')
 
-
 # VEHICLE TRANSMISSIONS SCRAPING FROM WEB PAGES LISTINGS
-
 transmissions = feature_scraper_from_url('Transmission')
 
-
 # VEHICLE MILEAGES SCRAPING FROM WEB PAGES LISTINGS
-
 mileages = feature_scraper_from_url('Mileage')
-
 
 # VEHICLE ENGINES SCRAPING FROM WEB PAGES LISTINGS
 
+
+def engine_from_url(url):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml')
+    nth_finding = re.findall('Engine</h4><ul><li>.+</li>', str(nth_soup))
+    return re.findall('[^><]+', str(nth_finding))[4]
+
+
+engines = list(map(engine_from_url, urls))
+
+# VEHICLE MAKES SCRAPING FROM WEB PAGES LISTINGS
+
+
+def make_model_from_url(url, index):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml')
+    nth_finding = nth_soup.find_all('div', {'class': 'text-truncate heading-3 margin-right-2 margin-right-sm-3'})
+    nth_regex_finding = re.findall('[0-9]{4} .+<', str(nth_finding))
+    make_model = re.findall('[A-z]+ [A-z]+', str(nth_regex_finding))[0]
+    return make_model.split()[index]
+
+
+makes = list(map(make_model_from_url, urls, itertools.repeat(0, len(urls))))
+
+# VEHICLE MODELS SCRAPING FROM WEB PAGES LISTINGS
+models = list(map(make_model_from_url, urls, itertools.repeat(1, len(urls))))
+
+
+columns = {
+    'Make': makes, 'Model': models, 'Year': years, 'Price': prices, 'Engine': engines, 'Mileage': mileages,
+    'Interior Color': interior_colors, 'Exterior Color': exterior_colors, 'Drive Type': drive_types,
+    'Fuel Type': fuel_types, 'Transmission': transmissions, 'MPG': MPGs, 'Style': styles,
+    'Bed Length': bed_lengths, 'Location (City)': cities, 'Location (State)': states
+}
+vehicles = pd.DataFrame(columns)
