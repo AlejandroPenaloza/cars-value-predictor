@@ -29,7 +29,7 @@ def get_soups(website_number):
     return BeautifulSoup(get_url.content, 'lxml')
 
 
-soups = list(map(get_soups, list(range(1, 600))))
+soups = list(map(get_soups, list(range(1, 501))))
 
 # Function to scrape the vehicles prices for each web page
 
