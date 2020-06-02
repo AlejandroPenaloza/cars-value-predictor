@@ -103,3 +103,65 @@ def ymm_scraper(index):
 years = ymm_scraper(0)
 makes = ymm_scraper(1)
 models = ymm_scraper(2)
+
+# Vehicles prices scraping
+
+
+def prices_scraper(url):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml').find_all('div', {'data-qa': 'LabelBlock-text'})
+    try:
+        return re.findall('[0-9]+,[0-9]+', str(nth_soup))[0]
+    except:
+        return np.NaN
+
+
+prices = list(map(prices_scraper, urls))
+
+# Vehicles locations (cities and states) scraping
+
+
+def cities_scraper(url):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml').find_all('span', {'data-qa': 'used-vdp-header-location'})
+    try:
+        return re.findall('">.+<!', str(nth_soup))[0][2: -12]
+    except:
+        return np.NaN
+
+
+def states_scraper(url):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml').find_all('span', {'data-qa': 'used-vdp-header-location'})
+    try:
+        return re.findall('[A-W][A-Z]', str(nth_soup))[0]
+    except:
+        return np.NaN
+
+
+cities = list(map(cities_scraper, urls))
+states = list(map(states_scraper, urls))
+
+# Vehicles conditions scraping
+
+
+def conditions_scraper(url):
+    nth_request = requests.get(url).content
+    nth_soup = BeautifulSoup(nth_request, 'lxml').find_all('li', {'class': '_h9wfdq'})
+    try:
+        return re.findall('">[0-9]<!', str(nth_soup[0]))[0][2: -2] + re.findall('->.+</l', str(nth_soup[0]))[0][2: -3]
+    except:
+        return np.NaN
+
+
+conditions = list(map(conditions_scraper, urls))
+
+# Building the dataset
+features = {
+    'Make': makes, 'Model': models, 'Year': years, 'Mileage': mileages, 'Transmission': transmissions,
+    'Engine': engines, 'Exterior Color': exterior_colors, 'Interior Color': interior_colors,
+    'MPG': MPGs, 'Fuel Type': fuel_types, 'Drive Type': drive_types, 'Location (City)': cities,
+    'Location (State)': states, 'Style': styles, 'Condition (Accidents)': conditions,
+    'Options Level': options_levels, 'Bed Length': bed_lengths, 'Price': prices
+}
+vehicles_data = pd.DataFrame(features)
