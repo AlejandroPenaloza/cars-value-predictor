@@ -19,9 +19,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 from sklearn.metrics import roc_curve, roc_auc_score
 
-# VEHICLES PRICES SCRAPING FROM WEB PAGE LISTINGS
-
-# Function to get the raw HTML soups from all 600 web pages
+# Function to get the raw HTML soups from all 500 web pages
 
 
 def get_soups(website_number):
@@ -31,55 +29,7 @@ def get_soups(website_number):
 
 soups = list(map(get_soups, list(range(1, 501))))
 
-# Function to scrape the vehicles prices for each web page
-
-
-def prices_scraper(soup):
-    nth_page_prices_soup = soup.find_all('h4', {'data-test': 'vehicleCardPricingBlockPrice'})
-    nth_page_prices = re.findall('[0-9]+,[0-9]+', str(nth_page_prices_soup))
-    return nth_page_prices
-
-
-prices = list(map(prices_scraper, soups))
-prices = str(prices).replace('[', '').replace(']', '').split(', ')
-prices = list(map(lambda x: x[1:-1], prices))
-
-# VEHICLES YEARS SCRAPING FROM WEB PAGE LISTINGS
-# Function to scrape a feature from each soup and return the features list
-
-
-def scraper(tag, element, element_description, regex):
-    def features_scraper(soup):
-        nth_page_features_soup = soup.find_all(tag, {element: element_description})
-        nth_page_features = re.findall(regex, str(nth_page_features_soup))
-        return nth_page_features
-    features = list(map(features_scraper, soups))
-    features = str(features).replace('[', '').replace(']', '').split(', ')
-    features = list(map(lambda x: x[1: -1], features))
-    return features
-
-
-years = scraper('span', 'class', 'vehicle-card-year', '[12][0-9]{3}')
-
-# VEHICLES LOCATIONS STATES SCRAPING FROM WEB PAGE LISTINGS
-states = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z]{2}')
-
-# VEHICLES LOCATIONS CITIES SCRAPING FROM WEB PAGE LISTINGS
-cities_unf = scraper('div', 'data-test', 'vehicleCardLocation', '[A-Z][a-z]+[. ]*[A-Z]*[a-z]*[. ]*[A-Z]*[a-z]*')
-cities = [city for city in cities_unf if cities_unf.index(city) in list(range(3, len(cities_unf), 4))]
-
-# VEHICLES EXTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
-exterior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', 'g>[A-Z][a-z]+')
-exterior_colors = list(map(lambda color: color[2:], exterior_colors_unf))
-
-# VEHICLES INTERIOR COLORS SCRAPING FROM WEB PAGE LISTINGS
-interior_colors_unf = scraper('div', 'data-test', 'vehicleCardColors', '->[A-Z][a-z]+')
-interior_colors = list(map(lambda color: color[2:], interior_colors_unf))
-
-# VEHICLES CONDITION (NUMBER OF ACCIDENTS) SCRAPING FROM WEB PAGE LISTINGS
-accidents = scraper('div', 'data-test', 'vehicleCardCondition', '[0-9]*[A-z]* accident[s]*')
-
-# VEHICLES MILEAGES SCRAPING FROM WEB PAGES LISTINGS
+# URLs scraping
 fst_page_urls = np.array([])
 
 
@@ -89,12 +39,11 @@ for ind in range(33):
 
 
 def urls_scraper(soup):
-    nth_urls = []
 
-    for nth in range(30):
+    def urlsxpage(nth):
         finding = soup.find_all('a', {'data-test': 'usedListing'})[nth]
-        nth_urls.append(re.findall('href="/.+" style', str(finding)[:280])[0])
-
+        return re.findall('href="/.+" style', str(finding)[:280])[0]
+    nth_urls = list(map(urlsxpage, list(range(30))))
     return nth_urls
 
 
@@ -104,78 +53,53 @@ all_urls = np.append(fst_page_urls, rest_pages_urls)
 url_formatter = np.vectorize(lambda url: 'https://truecar.com' + url[6: -7])
 urls = url_formatter(all_urls)
 
-# VEHICLES STYLES SCRAPING FROM WEB PAGES LISTINGS
+# Main part of vehicles features scraping
 
 
-def feature_scraper_from_url(feature_as_argument):
-
+def scraper(feature_as_argument):
     def feature_from_url(url):
         nth_request = requests.get(url)
         nth_soup = BeautifulSoup(nth_request.content, 'lxml')
         nth_search = re.search(feature_as_argument + '</h4><ul><li>.+</li', str(nth_soup))
-        return re.findall('li>.+</l', str(nth_search))
-    features_unf = list(map(feature_from_url, urls[:10]))
-    features = list(map(lambda f: str(f)[5: -5], features_unf))
-    return features
+        try:
+            return re.findall('li>.+</l', str(nth_search))[0][3: -3]
+        except:
+            return np.NaN
+
+    return list(map(feature_from_url, urls))
 
 
-styles = feature_scraper_from_url('Style')
+drive_types = scraper('Drive Type')
+fuel_types = scraper('Fuel Type')
+mileages = scraper('Mileage')
+transmissions = scraper('Transmission')
+MPGs = scraper('MPG')
+styles = scraper('Style')
+options_levels = scraper('Options Level')
+bed_lengths = scraper('Bed Length')
+engines = scraper('Engine')
+exterior_colors = scraper('Exterior Color')
+interior_colors = scraper('Interior Color')
 
-# VEHICLE OPTIONS LEVELS SCRAPING FROM WEB PAGES LISTINGS
-options_level = feature_scraper_from_url('Options Level')
-
-# VEHICLE BED LENGTHS SCRAPING FROM WEB PAGES LISTINGS
-bed_lengths = feature_scraper_from_url('Bed Length')
-
-# VEHICLE MILEAGES PER GALLON SCRAPING FROM WEB PAGES LISTINGS
-MPGs = feature_scraper_from_url('MPG')
-
-# VEHICLES DRIVE TYPES SCRAPING FROM WEB PAGES LISTINGS
-drive_types = feature_scraper_from_url('Drive Type')
-
-# VEHICLE FUEL TYPES SCRAPING FROM WEB PAGES LISTINGS
-fuel_types = feature_scraper_from_url('Fuel Type')
-
-# VEHICLE TRANSMISSIONS SCRAPING FROM WEB PAGES LISTINGS
-transmissions = feature_scraper_from_url('Transmission')
-
-# VEHICLE MILEAGES SCRAPING FROM WEB PAGES LISTINGS
-mileages = feature_scraper_from_url('Mileage')
-
-# VEHICLE ENGINES SCRAPING FROM WEB PAGES LISTINGS
+# Vehicles years, makes and models scraping
 
 
-def engine_from_url(url):
-    nth_request = requests.get(url).content
-    nth_soup = BeautifulSoup(nth_request, 'lxml')
-    nth_finding = re.findall('Engine</h4><ul><li>.+</li>', str(nth_soup))
-    return re.findall('[^><]+', str(nth_finding))[4]
+def ymm_scraper(index):
+    def feature_from_url(url):
+        nth_request = requests.get(url)
+        nth_soup = BeautifulSoup(nth_request.content, 'lxml')
+        nth_finding = nth_soup.find_all('div', {'class': 'text-truncate heading-3 margin-right-2 margin-right-sm-3'})
+        try:
+            if index == 2:
+                return re.findall('>.+<', str(nth_finding))[0][1: -1].split()[2:]
+            else:
+                return re.findall('>.+<', str(nth_finding))[0][1: -1].split()[index]
+        except:
+            return np.NaN
+
+    return list(map(feature_from_url, urls))
 
 
-engines = list(map(engine_from_url, urls))
-
-# VEHICLE MAKES SCRAPING FROM WEB PAGES LISTINGS
-
-
-def make_model_from_url(url, index):
-    nth_request = requests.get(url).content
-    nth_soup = BeautifulSoup(nth_request, 'lxml')
-    nth_finding = nth_soup.find_all('div', {'class': 'text-truncate heading-3 margin-right-2 margin-right-sm-3'})
-    nth_regex_finding = re.findall('[0-9]{4} .+<', str(nth_finding))
-    make_model = re.findall('[A-z]+ [A-z]+', str(nth_regex_finding))[0]
-    return make_model.split()[index]
-
-
-makes = list(map(make_model_from_url, urls, itertools.repeat(0, len(urls))))
-
-# VEHICLE MODELS SCRAPING FROM WEB PAGES LISTINGS
-models = list(map(make_model_from_url, urls, itertools.repeat(1, len(urls))))
-
-
-columns = {
-    'Make': makes, 'Model': models, 'Year': years, 'Price': prices, 'Engine': engines, 'Mileage': mileages,
-    'Interior Color': interior_colors, 'Exterior Color': exterior_colors, 'Drive Type': drive_types,
-    'Fuel Type': fuel_types, 'Transmission': transmissions, 'MPG': MPGs, 'Style': styles,
-    'Bed Length': bed_lengths, 'Location (City)': cities, 'Location (State)': states
-}
-vehicles = pd.DataFrame(columns)
+years = ymm_scraper(0)
+makes = ymm_scraper(1)
+models = ymm_scraper(2)
