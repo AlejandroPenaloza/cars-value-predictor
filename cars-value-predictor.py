@@ -20,7 +20,8 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 from sklearn.metrics import roc_curve, roc_auc_score
 
-# Function to get the raw HTML soups from all 500 web pages
+
+# Function to get the raw HTML soups from all 564 web pages
 
 
 def get_soups(website_number):
@@ -168,4 +169,3 @@ features = {
 }
 vehicles_data = pd.DataFrame(features)
 vehicles_data.to_csv("C:/Users/.../vehicles_data.csv")
-
