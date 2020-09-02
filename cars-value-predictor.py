@@ -12,6 +12,7 @@ import matplotlib.backends.backend_agg
 import matplotlib.figure
 import seaborn as sb
 import datetime
+import time
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -27,7 +28,7 @@ def get_soups(website_number):
     return BeautifulSoup(get_url.content, 'lxml')
 
 
-soups = list(map(get_soups, list(range(1, 501))))
+soups = list(map(get_soups, list(range(1, 564))))
 
 # URLs scraping
 fst_page_urls = np.array([])
@@ -156,6 +157,7 @@ def conditions_scraper(url):
 
 conditions = list(map(conditions_scraper, urls))
 
+
 # Building the dataset
 features = {
     'Make': makes, 'Model': models, 'Year': years, 'Mileage': mileages, 'Transmission': transmissions,
@@ -165,3 +167,5 @@ features = {
     'Options Level': options_levels, 'Bed Length': bed_lengths, 'Price': prices
 }
 vehicles_data = pd.DataFrame(features)
+vehicles_data.to_csv("C:/Users/.../vehicles_data.csv")
+
