@@ -5,4 +5,3 @@ Data was collected by scraping web pages corresponding to used cars listings
 in truecar.com
 Features such as year of the vehicle, its made and fuel type were provided
 for building the dataset Vehicles_Data, which is located as csv file in this repository.
-Dvf
