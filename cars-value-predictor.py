@@ -1,5 +1,6 @@
 import itertools
 import pandas as pd
+import pandas_profiling
 import numpy as np
 import scipy.stats
 import re
@@ -158,7 +159,6 @@ def conditions_scraper(url):
 
 conditions = list(map(conditions_scraper, urls))
 
-
 # Building the dataset
 features = {
     'Make': makes, 'Model': models, 'Year': years, 'Mileage': mileages, 'Transmission': transmissions,
@@ -168,4 +168,10 @@ features = {
     'Options Level': options_levels, 'Bed Length': bed_lengths, 'Price': prices
 }
 vehicles_data = pd.DataFrame(features)
+
+#Saving dataframe as csv file
 vehicles_data.to_csv("C:/Users/.../vehicles_data.csv")
+
+#Exploratory Data Analysis to begin
+print(pandas_profiling.ProfileReport(vehicles_data))
+print(vehicles_data.describe())
