@@ -167,10 +167,10 @@ features = {
     'Location (State)': states, 'Style': styles, 'Condition (Accidents)': conditions,
     'Options Level': options_levels, 'Bed Length': bed_lengths, 'Price': prices
 }
-vehicles_data = pd.DataFrame(features)
+vehicles_dataset = pd.DataFrame(features)
 
 #Saving dataframe as csv file
-vehicles_data.to_csv("C:/Users/.../vehicles_data.csv")
+vehicles_dataset.to_csv("C:/Users/.../vehicles_data.csv")
 
 #Exploratory Data Analysis to begin
 print(pandas_profiling.ProfileReport(vehicles_data))
