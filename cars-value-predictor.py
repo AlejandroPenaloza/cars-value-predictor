@@ -172,6 +172,6 @@ vehicles_dataset = pd.DataFrame(features)
 #Saving dataframe as csv file
 vehicles_dataset.to_csv("C:/Users/.../vehicles_data.csv")
 
-#Exploratory Data Analysis to begin
-print(pandas_profiling.ProfileReport(vehicles_data))
+#Exploratory Data Analysis
+print(pandas_profiling.ProfileReport(vehicles_dataset))
 print(vehicles_dataset.describe())
