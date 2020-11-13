@@ -174,4 +174,4 @@ vehicles_dataset.to_csv("C:/Users/.../vehicles_data.csv")
 
 #Exploratory Data Analysis to begin
 print(pandas_profiling.ProfileReport(vehicles_data))
-print(vehicles_data.describe())
+print(vehicles_dataset.describe())
